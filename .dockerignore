@@ -1,0 +1,31 @@
+# Secretos y entorno local
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# Datos locales (la imagen usa /data)
+instance/
+*.db
+*.sqlite3
+
+# Git y sistema
+.git/
+.gitignore
+.gitattributes
+.DS_Store
+Thumbs.db
+
+# Pruebas y utilidades locales
+tests/
+pytest.ini
+iniciar.bat
+detener.bat
+README.md

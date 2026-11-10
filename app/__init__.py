@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from flask import Flask, render_template
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .config import Config
 from .extensions import db
@@ -66,6 +67,10 @@ def create_app(config_class=Config) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    # Detrás de un proxy (Coolify/Traefik) para generar URLs https correctas.
+    if app.config.get("TRUST_PROXY"):
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
+
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
 
     db.init_app(app)
@@ -93,5 +98,10 @@ def create_app(config_class=Config) -> Flask:
     from .scheduler import iniciar_scheduler
 
     iniciar_scheduler(app)
+
+    if not app.debug and app.config.get("SECRET_KEY") == "cambia-esta-clave-en-produccion":
+        app.logger.warning(
+            "SECRET_KEY sigue siendo la de desarrollo. Configura una clave segura en el entorno."
+        )
 
     return app

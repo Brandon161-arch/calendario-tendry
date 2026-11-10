@@ -30,8 +30,13 @@ def iniciar_scheduler(app) -> None:
         return
     if app.config.get("TESTING"):
         return
-    # Con el reloader de Flask, solo el proceso hijo debe arrancar el scheduler.
-    if app.debug and os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+    # Solo se aplica al servidor de desarrollo con reloader: el proceso padre
+    # no debe arrancar el scheduler, el hijo sí. Bajo Gunicorn no se aplica.
+    if (
+        app.debug
+        and os.environ.get("TENDRY_RELOADER") == "1"
+        and os.environ.get("WERKZEUG_RUN_MAIN") != "true"
+    ):
         return
 
     with app.app_context():

@@ -30,11 +30,18 @@ logging.basicConfig(
 
 from app import create_app  # noqa: E402
 
+_debug = os.getenv("FLASK_DEBUG", "0").strip().lower() in {"1", "true", "yes", "si", "on"}
+
+# Solo el servidor de desarrollo con `python run.py` usa el reloader.
+# Gunicorn importa `run:app` y no debe activar esta protección.
+if __name__ == "__main__" and _debug:
+    os.environ["TENDRY_RELOADER"] = "1"
+
 app = create_app()
 
 if __name__ == "__main__":
     app.run(
         host=os.getenv("HOST", "127.0.0.1"),
         port=int(os.getenv("PORT", "5000")),
-        debug=os.getenv("FLASK_DEBUG", "0").strip().lower() in {"1", "true", "yes", "si", "on"},
+        debug=_debug,
     )

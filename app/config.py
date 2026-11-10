@@ -105,6 +105,9 @@ class Config:
     # Scheduler
     SCHEDULER_ENABLED = _env_bool("SCHEDULER_ENABLED", True)
 
+    # Confiar en las cabeceras X-Forwarded-* del proxy (Coolify/Traefik)
+    TRUST_PROXY = _env_bool("TRUST_PROXY", False)
+
     # Servidor local
     HOST = os.getenv("HOST", "127.0.0.1")
     PORT = _env_int("PORT", 5000)

@@ -288,13 +288,48 @@ que no se notifique dos veces el mismo hallazgo.
 ## 10. Despliegue 24/7
 
 La app funciona en local, pero para que rastree todo el día necesita un servidor.
-En el servidor instala también el servidor WSGI:
+### Coolify (Dockerfile)
+
+El proyecto incluye `Dockerfile`, `docker-entrypoint.sh`, `.dockerignore` y
+`requirements-prod.txt`.
+
+1. En Coolify: **New Resource → Dockerfile** y apunta al repositorio.
+2. Puerto expuesto: **8000**. Healthcheck: `/`.
+3. Añade las variables de entorno en Coolify (no subas `.env` al repositorio):
+   - `SECRET_KEY` (obligatoria, larga y aleatoria).
+   - `DATABASE_URL=sqlite:////data/tendry.db`
+   - `TZ=America/Bogota`
+   - `TRUST_PROXY=1`
+   - `FLASK_DEBUG=0`
+   - `SCHEDULER_ENABLED=1`
+   - `DEFAULT_URLS=Tienda Trendy | https://www.maquillajetrendyshop.com/, Calendario de Adviento | https://www.maquillajetrendyshop.com/calendario-de-adviento`
+   - `STORE_URL=https://www.maquillajetrendyshop.com/`
+   - `WHATSAPP_TO=+573001687446`
+   - `NTFY_TOPIC`, `EMAIL_TO`, `SMTP_*`, `WHATSAPP_*`, `TWILIO_*`, etc.
+4. Crea un **volumen persistente** montado en **`/data`** para conservar SQLite
+   y el historial entre despliegues.
+5. Usa **1 réplica**. El scheduler corre dentro del proceso; con más réplicas se
+   duplicarían los avisos. Si necesitas escalar, pon `SCHEDULER_ENABLED=0` y
+   ejecuta el bot en un único servicio aparte.
+6. Despliega. La primera revisión se programa unos 30 segundos después de arrancar.
+
+Prueba local con Docker:
 
 ```bash
-pip install gunicorn
+docker build -t tendry-tracker .
+docker run -d --name tendry -p 8000:8000 --env-file .env -v tendry_data:/data tendry-tracker
 ```
 
-Opciones habituales:
+Abre `http://localhost:8000`.
+
+- La imagen instala `requirements-prod.txt` (sin pytest) y Gunicorn.
+- El contenedor arranca como root solo para ajustar permisos del volumen y luego
+  ejecuta la app como usuario `app`.
+- Los logs de Gunicorn van a stdout/stderr (visibles en Coolify); la app también
+  escribe en `/app/instance/app.log`.
+- Si usas PostgreSQL, cambia `DATABASE_URL`; el volumen `/data` ya no sería
+  necesario para la base.
+- No uses `--preload` en Gunicorn: el scheduler debe arrancar en el worker.
 
 ### Render
 
@@ -350,6 +385,10 @@ app/
   static/css/      # estilos mobile-first
 tests/             # pytest + HTML de ejemplo
 run.py             # entrada local
+Dockerfile         # imagen de producción para Coolify
+docker-entrypoint.sh
+requirements-prod.txt
+.dockerignore
 requirements.txt
 .env.example
 pytest.ini
