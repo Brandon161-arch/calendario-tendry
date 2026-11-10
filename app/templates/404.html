@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Página no encontrada · Tendry{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <span class="page-eyebrow">Error 404</span>
+    <h1 class="page-title">Esta página no existe.</h1>
+    <p class="page-sub">Puede que el enlace haya cambiado o que la dirección esté incompleta.</p>
+  </div>
+</div>
+
+<div class="empty-state">
+  <span class="empty-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.4L19 10l-5.1 1.6L12 17l-1.9-5.4L5 10l5.1-1.6z"/></svg>
+  </span>
+  <h3 class="empty-title">Volvamos a lo importante</h3>
+  <p class="empty-text">El calendario de adviento sigue esperando. Desde el panel puedes ver el estado y las últimas revisiones.</p>
+  <a class="btn btn-primary" href="{{ url_for('main.dashboard') }}">Volver al panel</a>
+</div>
+{% endblock %}

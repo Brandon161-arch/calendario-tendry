@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Historial · Tendry{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <span class="page-eyebrow">Registro</span>
+    <h1 class="page-title">Historial</h1>
+    <p class="page-sub">Todo lo que ha pasado mientras esperabas: hallazgos, avisos y revisiones.</p>
+  </div>
+  <div class="page-actions">
+    <form method="post" action="{{ url_for('main.limpiar_historial') }}"
+          data-confirm="¿Borrar todo el historial de revisiones? Esta acción no se puede deshacer.">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-danger btn-sm" type="submit">Borrar historial</button>
+    </form>
+  </div>
+</div>
+
+<section class="summary-grid" aria-label="Resumen del historial">
+  <article class="summary-card">
+    <div class="summary-value">{{ resumen.hallazgos }}</div>
+    <div class="summary-label">Hallazgos</div>
+  </article>
+  <article class="summary-card">
+    <div class="summary-value">{{ resumen.notificados }}</div>
+    <div class="summary-label">Avisos enviados</div>
+  </article>
+  <article class="summary-card">
+    <div class="summary-value">{{ resumen.revisiones }}</div>
+    <div class="summary-label">Revisiones</div>
+  </article>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <div>
+      <h2 class="section-title">Hallazgos</h2>
+      <p class="section-sub">Cada coincidencia conserva su enlace directo.</p>
+    </div>
+  </div>
+
+  {% if detecciones %}
+    <ol class="timeline">
+      {% for deteccion in detecciones %}
+        <li class="timeline-item">
+          <span class="timeline-dot" aria-hidden="true"></span>
+          <div class="timeline-body">
+            <div class="timeline-top">
+              <span class="timeline-term">{{ deteccion.matched_term }}</span>
+              {% if deteccion.notified_at %}
+                <span class="chip chip--ok">Notificado</span>
+              {% else %}
+                <span class="chip chip--warn">Sin notificar</span>
+              {% endif %}
+            </div>
+            <a class="timeline-link" href="{{ deteccion.link or deteccion.url }}" target="_blank" rel="noopener noreferrer">
+              {{ deteccion.link or deteccion.url }}
+            </a>
+            <p class="timeline-meta">
+              Visto por primera vez el {{ deteccion.first_seen_at|localtime('%d/%m/%Y a las %H:%M') }}
+              · {{ deteccion.kind }}
+              {% if deteccion.notified_at %} · Aviso enviado el {{ deteccion.notified_at|localtime('%d/%m/%Y a las %H:%M') }}{% endif %}
+            </p>
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <div class="empty-state">
+      <span class="empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.4L19 10l-5.1 1.6L12 17l-1.9-5.4L5 10l5.1-1.6z"/></svg>
+      </span>
+      <h3 class="empty-title">Aún no hay hallazgos</h3>
+      <p class="empty-text">Cuando aparezca el calendario de adviento, lo verás aquí con su enlace y el estado del aviso.</p>
+    </div>
+  {% endif %}
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <div>
+      <h2 class="section-title">Revisiones</h2>
+      <p class="section-sub">Fecha, resultado y detalle de cada chequeo.</p>
+    </div>
+  </div>
+
+  {% if logs.items %}
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>URL</th>
+              <th>Resultado</th>
+              <th>HTTP</th>
+              <th>Detalle</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in logs.items %}
+              <tr>
+                <td>{{ log.checked_at|localtime('%d/%m · %H:%M') }}</td>
+                <td class="url-cell">
+                  <a href="{{ log.url }}" target="_blank" rel="noopener noreferrer">{{ log.url }}</a>
+                </td>
+                <td>
+                  <span class="chip {{ 'chip--ok' if log.result == 'found' else ('chip--warn' if log.result == 'pending' else ('chip--bad' if log.result == 'error' else '')) }}">
+                    {{ etiquetas.get(log.result, log.result) }}
+                  </span>
+                </td>
+                <td>{{ log.http_status or '—' }}</td>
+                <td class="url-cell">
+                  {% if log.error %}
+                    <span class="cell-sub">{{ log.error }}</span>
+                  {% elif log.matched_term %}
+                    <span class="cell-title">{{ log.matched_term }}</span>
+                  {% else %}
+                    <span class="cell-sub">—</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if logs.pages > 1 %}
+      <div class="pagination">
+        <div>
+          {% if logs.has_prev %}
+            <a class="page-link" href="{{ url_for('main.historial', page=logs.prev_num) }}">← Anterior</a>
+          {% endif %}
+        </div>
+        <span class="page-status">Página {{ logs.page }} de {{ logs.pages }}</span>
+        <div>
+          {% if logs.has_next %}
+            <a class="page-link" href="{{ url_for('main.historial', page=logs.next_num) }}">Siguiente →</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="empty-state">
+      <span class="empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/></svg>
+      </span>
+      <h3 class="empty-title">Todavía no hay revisiones</h3>
+      <p class="empty-text">Lanza la primera revisión desde el panel para empezar a construir el historial.</p>
+      <a class="btn btn-primary" href="{{ url_for('main.dashboard') }}">Ir al panel</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

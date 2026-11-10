@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% block title %}Panel · Tendry{% endblock %}
+
+{% block content %}
+{% set clase_resultado = 'chip--ok' if estado.last_result == 'found' else ('chip--warn' if estado.last_result == 'pending' else ('chip--bad' if estado.last_result == 'error' else 'chip--lilac')) %}
+
+<section class="hero {{ 'hero--found' if estado.calendar_found else '' }}">
+  <div class="hero-content">
+    <span class="eyebrow">
+      {{ 'Hallazgo confirmado' if estado.calendar_found else 'Calendario de Adviento' }}
+    </span>
+
+    {% if estado.calendar_found %}
+      <h1>Ya está aquí.<br><em>Corre a por él.</em></h1>
+      <p class="hero-text">
+        Encontramos el calendario de adviento de Tendry{% if estado.last_match_term %} · {{ estado.last_match_term }}{% endif %}.
+        Puedes abrirlo directamente y compartirlo con quien también lo esté esperando.
+      </p>
+    {% else %}
+      <h1>La espera,<br><em>sin sorpresas.</em></h1>
+      <p class="hero-text">
+        Vigilamos las páginas que elijas y te avisamos en tu iPhone en cuanto el
+        calendario de adviento de Tendry aparezca a la venta.
+      </p>
+    {% endif %}
+
+    <div class="hero-actions">
+      {% if estado.calendar_found and estado.last_match_url %}
+        <a class="btn btn-primary" href="{{ estado.last_match_url }}" target="_blank" rel="noopener noreferrer">
+          Abrir el calendario
+        </a>
+      {% endif %}
+
+      <form method="post" action="{{ url_for('main.revisar_ahora') }}">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <button class="btn {{ 'btn-secondary' if estado.calendar_found else 'btn-primary' }}" type="submit">Revisar ahora</button>
+      </form>
+
+      <form method="post" action="{{ url_for('main.alternar_rastreo') }}">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-secondary" type="submit">{{ 'Pausar rastreo' if estado.running else 'Reanudar rastreo' }}</button>
+      </form>
+
+      <form method="post" action="{{ url_for('main.probar_notificacion') }}">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-secondary" type="submit">Probar aviso</button>
+      </form>
+
+      <form method="post" action="{{ url_for('main.reiniciar_alerta') }}"
+            data-confirm="¿Reiniciar la alerta? Se borrarán los hallazgos y volverá a notificar si el calendario sigue apareciendo.">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-danger" type="submit">Reiniciar alerta</button>
+      </form>
+    </div>
+  </div>
+
+  <aside class="hero-aside" aria-label="Estado del rastreo">
+    <div class="status-disc {{ 'status-disc--found' if estado.calendar_found else ('' if estado.running else 'status-disc--paused') }}">
+      <span class="status-disc-dot" aria-hidden="true"></span>
+      <span class="status-disc-label">{{ 'Encontrado' if estado.calendar_found else ('Rastreando' if estado.running else 'En pausa') }}</span>
+      <span class="status-disc-sub">
+        {{ objetivos|length }} URL{{ '' if objetivos|length == 1 else 's' }} activa{{ '' if objetivos|length == 1 else 's' }}
+      </span>
+    </div>
+  </aside>
+</section>
+
+{% if estado.last_result == 'error' and estado.last_error %}
+  <div class="flash warning" role="alert" style="margin-top: 20px;">
+    La última revisión tuvo un problema: {{ estado.last_error }}
+  </div>
+{% endif %}
+
+<section class="stats" aria-label="Resumen del rastreo">
+  <article class="stat">
+    <span class="stat-icon stat-icon--sage" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 5 12 2.5-6h4"/></svg>
+    </span>
+    <span class="stat-label">Estado</span>
+    <strong class="stat-value">{{ 'Rastreando' if estado.running else 'Pausado' }}</strong>
+    <span class="stat-sub">{{ objetivos|length }} URL{{ '' if objetivos|length == 1 else 's' }} bajo vigilancia</span>
+  </article>
+
+  <article class="stat">
+    <span class="stat-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/></svg>
+    </span>
+    <span class="stat-label">Última revisión</span>
+    <strong class="stat-value">{{ estado.last_check_at|localtime('%d/%m · %H:%M') }}</strong>
+    <span class="chip {{ clase_resultado }}">{{ etiquetas.get(estado.last_result, estado.last_result) }}</span>
+  </article>
+
+  <article class="stat">
+    <span class="stat-icon stat-icon--gold" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>
+    </span>
+    <span class="stat-label">Próxima revisión</span>
+    <strong class="stat-value">{{ proximo|localtime('%d/%m · %H:%M') if estado.running else 'En pausa' }}</strong>
+    <span class="stat-sub">{{ 'Automática según tu intervalo' if estado.running else 'Reanuda para continuar' }}</span>
+  </article>
+
+  <article class="stat">
+    <span class="stat-icon stat-icon--lilac" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.4L19 10l-5.1 1.6L12 17l-1.9-5.4L5 10l5.1-1.6z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>
+    </span>
+    <span class="stat-label">Hallazgo</span>
+    <strong class="stat-value">{{ 'Sí, detectado' if estado.calendar_found else 'Aún no' }}</strong>
+    <span class="stat-sub">{{ estado.last_match_term if estado.last_match_term else 'Sin coincidencias todavía' }}</span>
+  </article>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <div>
+      <h2 class="section-title">Sitios que vigilamos</h2>
+      <p class="section-sub">Cada ciclo revisamos estas páginas con calma y sin saturar el sitio.</p>
+    </div>
+    <a class="section-link" href="{{ url_for('main.configuracion') }}">Editar configuración →</a>
+  </div>
+
+  {% if objetivos %}
+    <div class="target-grid">
+      {% for objetivo in objetivos %}
+        <article class="target-card">
+          <div class="target-top">
+            <span class="target-label">{{ objetivo.label or 'Sitio ' ~ loop.index }}</span>
+            {% if objetivo.last_status == 'found' %}
+              <span class="chip chip--ok">Detectado</span>
+            {% elif objetivo.last_status == 'pending' %}
+              <span class="chip chip--warn">Próximamente</span>
+            {% elif objetivo.last_status == 'error' %}
+              <span class="chip chip--bad">Error</span>
+            {% elif objetivo.last_status == 'not_found' %}
+              <span class="chip">Sin novedad</span>
+            {% else %}
+              <span class="chip chip--lilac">Pendiente</span>
+            {% endif %}
+          </div>
+
+          <a class="target-url" href="{{ objetivo.url }}" target="_blank" rel="noopener noreferrer">{{ objetivo.url }}</a>
+
+          <div class="target-meta">
+            <span>{{ objetivo.last_checked_at|localtime('%d/%m · %H:%M') }}</span>
+            <span>HTTP {{ objetivo.last_http_status or '—' }}</span>
+          </div>
+
+          {% if objetivo.last_error %}
+            <p class="target-error">{{ objetivo.last_error }}</p>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <span class="empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.4L19 10l-5.1 1.6L12 17l-1.9-5.4L5 10l5.1-1.6z"/></svg>
+      </span>
+      <h3 class="empty-title">Añade la primera URL</h3>
+      <p class="empty-text">Pega la web oficial de Tendry, una categoría o su sitemap. Yo me encargo de revisarlo con cuidado.</p>
+      <a class="btn btn-primary" href="{{ url_for('main.configuracion') }}">Configurar URLs</a>
+    </div>
+  {% endif %}
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <div>
+      <h2 class="section-title">Hallazgos</h2>
+      <p class="section-sub">Lo que ya hemos encontrado, con su enlace directo.</p>
+    </div>
+    <a class="section-link" href="{{ url_for('main.historial') }}">Ver historial →</a>
+  </div>
+
+  {% if detecciones %}
+    <ol class="timeline">
+      {% for deteccion in detecciones %}
+        <li class="timeline-item">
+          <span class="timeline-dot" aria-hidden="true"></span>
+          <div class="timeline-body">
+            <div class="timeline-top">
+              <span class="timeline-term">{{ deteccion.matched_term }}</span>
+              {% if deteccion.notified_at %}
+                <span class="chip chip--ok">Notificado</span>
+              {% else %}
+                <span class="chip chip--warn">Sin notificar</span>
+              {% endif %}
+            </div>
+            <a class="timeline-link" href="{{ deteccion.link or deteccion.url }}" target="_blank" rel="noopener noreferrer">
+              {{ deteccion.link or deteccion.url }}
+            </a>
+            <p class="timeline-meta">
+              Visto por primera vez el {{ deteccion.first_seen_at|localtime('%d/%m/%Y a las %H:%M') }}
+              · {{ deteccion.kind }}
+            </p>
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <div class="empty-state">
+      <span class="empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4h4"/><path d="M12 8v4l2.5 1.5"/></svg>
+      </span>
+      <h3 class="empty-title">Todavía nada por aquí</h3>
+      <p class="empty-text">En cuanto aparezca el calendario, verás el hallazgo y el aviso enviado a tu iPhone.</p>
+    </div>
+  {% endif %}
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <div>
+      <h2 class="section-title">Últimas revisiones</h2>
+      <p class="section-sub">Un vistazo rápido a lo que ha pasado en las últimas horas.</p>
+    </div>
+    <a class="section-link" href="{{ url_for('main.historial') }}">Todo el historial →</a>
+  </div>
+
+  {% if logs %}
+    <div class="check-list">
+      {% for log in logs %}
+        <div class="check-row">
+          <span class="check-time">{{ log.checked_at|localtime('%d/%m · %H:%M') }}</span>
+          <div>
+            <a class="check-url" href="{{ log.url }}" target="_blank" rel="noopener noreferrer">{{ log.url }}</a>
+            {% if log.matched_term %}<div class="check-term">{{ log.matched_term }}</div>{% endif %}
+          </div>
+          <span class="chip {{ 'chip--ok' if log.result == 'found' else ('chip--warn' if log.result == 'pending' else ('chip--bad' if log.result == 'error' else '')) }}">
+            {{ etiquetas.get(log.result, log.result) }}
+          </span>
+          <span class="check-http">{{ log.http_status or '—' }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <span class="empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/></svg>
+      </span>
+      <h3 class="empty-title">Aún no hay revisiones</h3>
+      <p class="empty-text">Pulsa «Revisar ahora» para lanzar el primer chequeo manual.</p>
+    </div>
+  {% endif %}
+</section>
+
+<section class="section store-section">
+  <div class="section-head">
+    <div>
+      <h2 class="section-title">La tienda de Tendry</h2>
+      <p class="section-sub">Un vistazo directo a la tienda, sin salir del panel.</p>
+    </div>
+    {% if tienda_url %}
+      <a class="section-link" href="{{ tienda_url }}" target="_blank" rel="noopener noreferrer">Abrir en una pestaña →</a>
+    {% else %}
+      <a class="section-link" href="{{ url_for('main.configuracion') }}">Añadir tienda →</a>
+    {% endif %}
+  </div>
+
+  {% if tienda_url %}
+    <div class="store-frame">
+      <div class="store-bar">
+        <span class="store-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span class="store-domain">{{ tienda_dominio }}</span>
+        <a class="store-open" href="{{ tienda_url }}" target="_blank" rel="noopener noreferrer">Abrir tienda</a>
+      </div>
+      <iframe src="{{ tienda_url }}" title="Tienda de Tendry" loading="lazy" referrerpolicy="no-referrer"></iframe>
+    </div>
+    <p class="store-note">
+      Si la tienda no permite mostrarse incrustada, verás el área en blanco:
+      ábrela con «Abrir tienda» o en una pestaña nueva.
+    </p>
+  {% else %}
+    <div class="empty-state">
+      <span class="empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 9l1.5-4h13L20 9"/><path d="M5 9h14v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M9 21v-6h6v6"/></svg>
+      </span>
+      <h3 class="empty-title">Aún no hay una tienda configurada</h3>
+      <p class="empty-text">Añade la URL oficial de Tendry y aparecerá aquí, incrustada y lista para mirar.</p>
+      <a class="btn btn-primary" href="{{ url_for('main.configuracion') }}">Configurar tienda</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

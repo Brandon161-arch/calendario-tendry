@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fbf5f2">
+  <title>{% block title %}Rastreador Tendry{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v=2">
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="{{ url_for('main.dashboard') }}" aria-label="Ir al panel">
+        <span class="brand-mark" aria-hidden="true">T</span>
+        <span class="brand-text">
+          <strong>Tendry</strong>
+          <small>advent tracker</small>
+        </span>
+      </a>
+
+      <nav class="nav" aria-label="Navegación principal">
+        <a href="{{ url_for('main.dashboard') }}" class="nav-link {{ 'active' if request.endpoint == 'main.dashboard' else '' }}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+          <span>Panel</span>
+        </a>
+        <a href="{{ url_for('main.configuracion') }}" class="nav-link {{ 'active' if request.endpoint == 'main.configuracion' else '' }}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10"/><path d="M18 7h2"/><circle cx="16" cy="7" r="2"/><path d="M4 17h4"/><path d="M12 17h8"/><circle cx="10" cy="17" r="2"/></svg>
+          <span>Configuración</span>
+        </a>
+        <a href="{{ url_for('main.historial') }}" class="nav-link {{ 'active' if request.endpoint == 'main.historial' else '' }}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/></svg>
+          <span>Historial</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido" class="container">
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+      {% if mensajes %}
+        <div class="flashes" role="status">
+          {% for categoria, mensaje in mensajes %}
+            <div class="flash {{ categoria }}">{{ mensaje }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <p class="footer-brand"><span class="footer-mark" aria-hidden="true">T</span> Rastreador de adviento · Hecho para esperar mejor.</p>
+      <p class="footer-note">Revisiones respetuosas y configurables.</p>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelectorAll("form[data-confirm]").forEach(function (form) {
+      form.addEventListener("submit", function (evento) {
+        if (!window.confirm(form.getAttribute("data-confirm"))) {
+          evento.preventDefault();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

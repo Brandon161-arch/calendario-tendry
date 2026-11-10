@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}Configuración · Tendry{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <span class="page-eyebrow">A tu manera</span>
+    <h1 class="page-title">Configuración</h1>
+    <p class="page-sub">
+      Elige qué páginas vigilamos, qué palabras buscamos y cómo quieres que te avisemos.
+      Los cambios se aplican al instante.
+    </p>
+  </div>
+</div>
+
+<form method="post" action="{{ url_for('main.configuracion') }}" class="settings-form">
+  <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+  <section class="settings-section">
+    <div class="settings-section-head">
+      <span class="settings-section-num" aria-hidden="true">1</span>
+      <div>
+        <h2 class="settings-section-title">Sitios que vigilamos</h2>
+        <p class="settings-section-sub">Portada, categoría, buscador o sitemap. Una URL por línea.</p>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="urls">URLs a rastrear</label>
+      <textarea id="urls" name="urls" rows="6" spellcheck="false" required
+        placeholder="Inicio | https://www.ejemplo.com/&#10;Categoría | https://www.ejemplo.com/categoria&#10;https://www.ejemplo.com/sitemap.xml">{{ form.urls }}</textarea>
+      <p class="help">
+        Formato opcional: <code>Etiqueta | https://...</code>. Cuantas más fuentes añadas,
+        más rápido encontraremos el calendario.
+      </p>
+    </div>
+
+    <div class="field">
+      <label for="store_url">Tienda que se muestra al final del panel</label>
+      <input id="store_url" name="store_url" type="url"
+        value="{{ form.store_url }}" placeholder="https://www.tiendadetendry.com/">
+      <p class="help">
+        Se mostrará incrustada al final del panel. Si la dejas vacía, usaremos la primera
+        URL rastreada que no sea un sitemap.
+      </p>
+    </div>
+  </section>
+
+  <section class="settings-section">
+    <div class="settings-section-head">
+      <span class="settings-section-num" aria-hidden="true">2</span>
+      <div>
+        <h2 class="settings-section-title">Qué buscamos</h2>
+        <p class="settings-section-sub">La comparación ignora mayúsculas y acentos.</p>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="keywords">Palabras clave</label>
+        <textarea id="keywords" name="keywords" rows="5" required
+          placeholder="calendario de adviento&#10;advent calendar&#10;adviento">{{ form.keywords }}</textarea>
+        <p class="help">Una por línea o separadas por comas.</p>
+      </div>
+
+      <div class="field">
+        <label for="interval">Cada cuántos minutos revisamos</label>
+        <input id="interval" name="interval" type="number" min="1" max="1440" step="1"
+          value="{{ form.interval }}" required>
+        <p class="help">Entre 1 y 1440 minutos. Recomendado: 15.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="settings-section">
+    <div class="settings-section-head">
+      <span class="settings-section-num" aria-hidden="true">3</span>
+      <div>
+        <h2 class="settings-section-title">Cómo te avisamos</h2>
+        <p class="settings-section-sub">Puedes activar más de un canal. Solo se envía un aviso por hallazgo.</p>
+      </div>
+    </div>
+
+    <div class="channel-grid">
+      <label class="channel-option">
+        <input type="checkbox" name="channels" value="ntfy" {% if 'ntfy' in form.channels %}checked{% endif %}>
+        <span class="channel-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6"/><path d="M10 19a2.2 2.2 0 0 0 4 0"/></svg>
+        </span>
+        <span class="channel-copy">
+          <strong>ntfy</strong>
+          <small>Push inmediato en tu iPhone</small>
+        </span>
+        <span class="channel-check" aria-hidden="true"></span>
+      </label>
+
+      <label class="channel-option">
+        <input type="checkbox" name="channels" value="email" {% if 'email' in form.channels %}checked{% endif %}>
+        <span class="channel-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M4 7l8 6 8-6"/></svg>
+        </span>
+        <span class="channel-copy">
+          <strong>Correo</strong>
+          <small>Un email a tu bandeja de entrada</small>
+        </span>
+        <span class="channel-check" aria-hidden="true"></span>
+      </label>
+
+      <label class="channel-option">
+        <input type="checkbox" name="channels" value="whatsapp" {% if 'whatsapp' in form.channels %}checked{% endif %}>
+        <span class="channel-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-11 6.6L4 19.5l1.4-4.8A7.5 7.5 0 1 1 20 11.5z"/><path d="M9 8.5c.3 1 1.5 3.2 2.2 3.9.7.7 2.3 1.5 3.3 1.8"/></svg>
+        </span>
+        <span class="channel-copy">
+          <strong>WhatsApp</strong>
+          <small>Mensaje directo a tu número</small>
+        </span>
+        <span class="channel-check" aria-hidden="true"></span>
+      </label>
+
+      <label class="channel-option">
+        <input type="checkbox" name="channels" value="telegram" {% if 'telegram' in form.channels %}checked{% endif %}>
+        <span class="channel-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M21 4L3 11l6 2 2 6 4-5 5 3z"/><path d="M9 13l8-6"/></svg>
+        </span>
+        <span class="channel-copy">
+          <strong>Telegram</strong>
+          <small>Mensaje directo a tu chat</small>
+        </span>
+        <span class="channel-check" aria-hidden="true"></span>
+      </label>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="ntfy_topic">Tema (topic) de ntfy</label>
+        <input id="ntfy_topic" name="ntfy_topic" type="text" maxlength="64"
+          value="{{ form.ntfy_topic }}" placeholder="tendry-adviento-mi-clave-secreta">
+        <p class="help">Debe coincidir con el tema al que te suscribes en la app ntfy.</p>
+      </div>
+
+      <div class="field">
+        <label for="email_to">Correo destinatario</label>
+        <input id="email_to" name="email_to" type="email"
+          value="{{ form.email_to }}" placeholder="tu-correo@gmail.com">
+        <p class="help">Solo se usa si activas el canal de correo.</p>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="whatsapp_to">Número de WhatsApp</label>
+        <input id="whatsapp_to" name="whatsapp_to" type="text"
+          value="{{ form.whatsapp_to }}" placeholder="+34600111222">
+        <p class="help">Con prefijo de país. Solo se usa si activas el canal de WhatsApp.</p>
+      </div>
+
+      <div class="field">
+        <label for="telegram_chat_id">Chat ID de Telegram</label>
+        <input id="telegram_chat_id" name="telegram_chat_id" type="text"
+          value="{{ form.telegram_chat_id }}" placeholder="123456789">
+        <p class="help">Solo se usa si activas el canal de Telegram.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="settings-section">
+    <div class="settings-section-head">
+      <span class="settings-section-num" aria-hidden="true">4</span>
+      <div>
+        <h2 class="settings-section-title">Privacidad y guardado</h2>
+        <p class="settings-section-sub">Las claves sensibles viven fuera de la base de datos.</p>
+      </div>
+    </div>
+
+    <div class="env-note">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      <div>
+        <strong>Credenciales privadas en .env</strong>
+        SMTP: {{ 'configurado' if canales.smtp else 'sin configurar' }} ·
+        WhatsApp: {{ canales.whatsapp_provider }} ·
+        Telegram: {{ 'configurado' if canales.telegram else 'sin configurar' }}.
+        Nunca se guardan en la base de datos. El tema de ntfy y el número de WhatsApp sí puedes editarlos aquí.
+      </div>
+    </div>
+
+    <div class="form-footer" style="margin-top: 18px;">
+      <p class="form-footer-note">Se guardará la configuración y se reprogramará la próxima revisión.</p>
+      <button class="btn btn-primary" type="submit">Guardar configuración</button>
+    </div>
+  </section>
+</form>
+
+<div class="test-card">
+  <div class="test-card-copy">
+    <span class="page-eyebrow">Pruebas</span>
+    <h2 class="test-card-title">Comprueba que todo llega</h2>
+    <p class="help">
+      Guarda la configuración y envía una prueba al correo o al WhatsApp guardados.
+      Requiere las credenciales correspondientes en <code>.env</code>.
+    </p>
+  </div>
+  <div class="test-card-actions">
+    <form method="post" action="{{ url_for('main.probar_correo') }}">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-secondary" type="submit">Probar correo</button>
+    </form>
+    <form method="post" action="{{ url_for('main.probar_whatsapp') }}">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-secondary" type="submit">Probar WhatsApp</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
