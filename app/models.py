@@ -135,6 +135,38 @@ class BotState(db.Model):
         return estado
 
 
+def sembrar_urls_iniciales(app) -> int:
+    """Activa las URLs por defecto cuando no hay ninguna URL activa."""
+    urls_iniciales = parsear_urls(app.config.get("DEFAULT_URLS") or "")
+    if not urls_iniciales:
+        return 0
+    if TargetURL.query.filter_by(active=True).count() > 0:
+        return 0
+
+    existentes = {
+        objetivo.url.rstrip("/"): objetivo for objetivo in TargetURL.query.all()
+    }
+    activadas = 0
+    for etiqueta, url in urls_iniciales:
+        clave = url.rstrip("/")
+        objetivo = existentes.get(clave)
+        if objetivo is None:
+            db.session.add(TargetURL(label=etiqueta, url=url, active=True))
+        else:
+            objetivo.active = True
+            if not objetivo.label:
+                objetivo.label = etiqueta
+        activadas += 1
+
+    if not Setting.get("store_url") and app.config.get("STORE_URL"):
+        Setting.set("store_url", app.config["STORE_URL"])
+
+    db.session.commit()
+    if activadas:
+        app.logger.info("URLs iniciales activadas: %s", activadas)
+    return activadas
+
+
 def inicializar_datos(app) -> None:
     """Crea la configuración inicial y el estado del bot si no existen."""
     valores = {
@@ -155,26 +187,9 @@ def inicializar_datos(app) -> None:
     if db.session.get(BotState, 1) is None:
         db.session.add(BotState(id=1, running=True, calendar_found=False, last_result="never"))
 
-    # Carga inicial de las URLs oficiales. Si la base está vacía se siembran
-    # siempre; si ya hay URLs, solo se hace la primera vez para no reactivar
-    # enlaces que el usuario haya desactivado después.
-    sin_urls = TargetURL.query.count() == 0
-    if app.config.get("DEFAULT_URLS") and (
-        sin_urls or Setting.get("defaults_seeded") != "1"
-    ):
-        existentes = {
-            objetivo.url.rstrip("/"): objetivo for objetivo in TargetURL.query.all()
-        }
-        for etiqueta, url in parsear_urls(app.config["DEFAULT_URLS"]):
-            clave = url.rstrip("/")
-            objetivo = existentes.get(clave)
-            if objetivo is None:
-                db.session.add(TargetURL(label=etiqueta, url=url, active=True))
-            else:
-                objetivo.active = True
-                if not objetivo.label:
-                    objetivo.label = etiqueta
-        Setting.set("defaults_seeded", "1")
+    # Si no hay ninguna URL activa (primer arranque, despliegue nuevo o una
+    # base que quedó vacía), se activan las URLs oficiales por defecto.
+    sembrar_urls_iniciales(app)
 
     # Normaliza palabras clave mal guardadas.
     if db.session.get(Setting, "keywords") is not None:

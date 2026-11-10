@@ -28,6 +28,31 @@ def test_post_sin_csrf_es_rechazado(client):
     assert respuesta.status_code == 400
 
 
+def test_dashboard_restaura_urls_si_quedan_cero(app):
+    from app.extensions import db
+    from app.models import TargetURL
+
+    with app.app_context():
+        app.config["DEFAULT_URLS"] = (
+            "Tienda | https://tendry.test/, "
+            "Calendario | https://tendry.test/calendario-de-adviento"
+        )
+        for objetivo in TargetURL.query.all():
+            objetivo.active = False
+        db.session.commit()
+
+    respuesta = app.test_client().get("/")
+    assert respuesta.status_code == 200
+
+    with app.app_context():
+        activas = TargetURL.query.filter_by(active=True).all()
+        assert len(activas) == 2
+        assert {objetivo.url for objetivo in activas} == {
+            "https://tendry.test/",
+            "https://tendry.test/calendario-de-adviento",
+        }
+
+
 def test_revision_detecta_y_notifica_una_sola_vez(app, monkeypatch):
     from app import notifier, scraper
     from app.extensions import db

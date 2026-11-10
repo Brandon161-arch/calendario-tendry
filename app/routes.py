@@ -22,6 +22,7 @@ from .models import (
     Detection,
     Setting,
     TargetURL,
+    sembrar_urls_iniciales,
 )
 from .scraper import run_check
 from .utils import es_url_valida, parsear_keywords, parsear_urls
@@ -64,6 +65,10 @@ def dashboard():
     estado = BotState.get()
     proximo = scheduler.proxima_ejecucion() or estado.next_check_at
     objetivos = TargetURL.query.filter_by(active=True).order_by(TargetURL.id).all()
+    if not objetivos and sembrar_urls_iniciales(current_app):
+        # Autocorrección: si la base quedó sin URLs, se restauran las oficiales.
+        objetivos = TargetURL.query.filter_by(active=True).order_by(TargetURL.id).all()
+
     logs = CheckLog.query.order_by(CheckLog.checked_at.desc()).limit(8).all()
     detecciones = Detection.query.order_by(Detection.first_seen_at.desc()).limit(5).all()
 
