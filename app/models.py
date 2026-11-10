@@ -155,10 +155,22 @@ def inicializar_datos(app) -> None:
     if db.session.get(BotState, 1) is None:
         db.session.add(BotState(id=1, running=True, calendar_found=False, last_result="never"))
 
-    # Solo se cargan URLs iniciales si la tabla está vacía.
-    if TargetURL.query.count() == 0 and app.config.get("DEFAULT_URLS"):
+    # Carga inicial de las URLs oficiales. Se hace una sola vez para no
+    # reactivar enlaces que el usuario haya desactivado después.
+    if app.config.get("DEFAULT_URLS") and Setting.get("defaults_seeded") != "1":
+        existentes = {
+            objetivo.url.rstrip("/"): objetivo for objetivo in TargetURL.query.all()
+        }
         for etiqueta, url in parsear_urls(app.config["DEFAULT_URLS"]):
-            db.session.add(TargetURL(label=etiqueta, url=url, active=True))
+            clave = url.rstrip("/")
+            objetivo = existentes.get(clave)
+            if objetivo is None:
+                db.session.add(TargetURL(label=etiqueta, url=url, active=True))
+            else:
+                objetivo.active = True
+                if not objetivo.label:
+                    objetivo.label = etiqueta
+        Setting.set("defaults_seeded", "1")
 
     # Normaliza palabras clave mal guardadas.
     if db.session.get(Setting, "keywords") is not None:
