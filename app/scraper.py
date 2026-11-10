@@ -489,14 +489,16 @@ def _ejecutar_revision(app) -> dict:
     estado.last_error = ultimo_error if estado.last_result == "error" else None
 
     if nuevas:
+        # El calendario se considera detectado aunque falle el envío del aviso.
+        estado.calendar_found = True
+        estado.last_match_url = nuevas[0].link or nuevas[0].url
+        estado.last_match_term = nuevas[0].matched_term
+
         ok, detalle = _notificar_nuevas(app, nuevas)
         if ok:
             momento = utcnow()
             for deteccion in nuevas:
                 deteccion.notified_at = momento
-            estado.calendar_found = True
-            estado.last_match_url = nuevas[0].link or nuevas[0].url
-            estado.last_match_term = nuevas[0].matched_term
             app.logger.info("Notificación enviada: %s", detalle)
         else:
             app.logger.warning("No se pudo notificar: %s", detalle)

@@ -89,3 +89,8 @@ def proxima_ejecucion() -> datetime | None:
     if job is None or job.next_run_time is None:
         return None
     return job.next_run_time.astimezone(timezone.utc).replace(tzinfo=None)
+
+
+def esta_activo() -> bool:
+    """Indica si el scheduler está arrancado y el job existe."""
+    return bool(scheduler.running and scheduler.get_job(JOB_ID) is not None)

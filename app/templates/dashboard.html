@@ -65,6 +65,21 @@
   </aside>
 </section>
 
+<div class="live-strip {{ '' if estado.running else 'live-strip--paused' }}">
+  <div class="live-status">
+    <span class="live-dot" aria-hidden="true"></span>
+    <div>
+      <strong>{{ 'Rastreo activo' if estado.running else 'Rastreo pausado' }}</strong>
+      <span>Última revisión {{ estado.last_check_at|hace }}</span>
+    </div>
+  </div>
+  <div class="live-meta">
+    <span><b>Próxima</b> {{ (proximo|faltan) if estado.running else 'al reanudar' }}</span>
+    <span><b>Scheduler</b> {{ 'activo' if scheduler_activo else 'inactivo' }}</span>
+    <span><b>Cada</b> {{ intervalo }} min</span>
+  </div>
+</div>
+
 {% if estado.last_result == 'error' and estado.last_error %}
   <div class="flash warning" role="alert" style="margin-top: 20px;">
     La última revisión tuvo un problema: {{ estado.last_error }}
@@ -88,6 +103,7 @@
     <span class="stat-label">Última revisión</span>
     <strong class="stat-value">{{ estado.last_check_at|localtime('%d/%m · %H:%M') }}</strong>
     <span class="chip {{ clase_resultado }}">{{ etiquetas.get(estado.last_result, estado.last_result) }}</span>
+    <span class="stat-sub">{{ estado.last_check_at|hace }}</span>
   </article>
 
   <article class="stat">
@@ -96,7 +112,7 @@
     </span>
     <span class="stat-label">Próxima revisión</span>
     <strong class="stat-value">{{ proximo|localtime('%d/%m · %H:%M') if estado.running else 'En pausa' }}</strong>
-    <span class="stat-sub">{{ 'Automática según tu intervalo' if estado.running else 'Reanuda para continuar' }}</span>
+    <span class="stat-sub">{{ ((proximo|faltan) ~ ' · cada ' ~ intervalo ~ ' min') if estado.running else 'Reanuda para continuar' }}</span>
   </article>
 
   <article class="stat">
@@ -263,11 +279,17 @@
         <span class="store-domain">{{ tienda_dominio }}</span>
         <a class="store-open" href="{{ tienda_url }}" target="_blank" rel="noopener noreferrer">Abrir tienda</a>
       </div>
-      <iframe src="{{ tienda_url }}" title="Tienda de Tendry" loading="lazy" referrerpolicy="no-referrer"></iframe>
+      <a class="store-preview" href="{{ tienda_url }}" target="_blank" rel="noopener noreferrer"
+         aria-label="Abrir la tienda Trendy Shop en una pestaña nueva">
+        <img src="{{ url_for('static', filename='img/tienda-preview.png') }}"
+             alt="Vista previa de la tienda Trendy Shop" loading="lazy">
+        <span class="store-preview-shade" aria-hidden="true"></span>
+        <span class="store-preview-cta">Entrar en la tienda <span aria-hidden="true">→</span></span>
+      </a>
     </div>
     <p class="store-note">
-      Si la tienda no permite mostrarse incrustada, verás el área en blanco:
-      ábrela con «Abrir tienda» o en una pestaña nueva.
+      Vista previa de la tienda. Trendy Shop no permite mostrarse incrustada,
+      así que se abre en una pestaña nueva.
     </p>
   {% else %}
     <div class="empty-state">

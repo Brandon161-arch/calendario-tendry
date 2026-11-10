@@ -43,9 +43,9 @@ def es_url_valida(url: str) -> bool:
 
 
 def parsear_urls(texto: str) -> list[tuple[str, str]]:
-    """Convierte líneas 'Etiqueta | URL' o 'URL' en pares (etiqueta, url)."""
+    """Convierte líneas o listas separadas por comas en pares (etiqueta, url)."""
     resultado: list[tuple[str, str]] = []
-    for numero, linea in enumerate((texto or "").splitlines(), start=1):
+    for numero, linea in enumerate(re.split(r"[\n,]+", texto or ""), start=1):
         linea = linea.strip()
         if not linea:
             continue

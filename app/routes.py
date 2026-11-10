@@ -76,6 +76,7 @@ def dashboard():
                 tienda_url = objetivo.url
                 break
     tienda_dominio = urlparse(tienda_url).netloc if tienda_url else ""
+    intervalo = Setting.get_int("interval_minutes", current_app.config["CHECK_INTERVAL_MINUTES"])
 
     return render_template(
         "dashboard.html",
@@ -87,6 +88,8 @@ def dashboard():
         etiquetas=ETIQUETAS_RESULTADO,
         tienda_url=tienda_url,
         tienda_dominio=tienda_dominio,
+        intervalo=intervalo,
+        scheduler_activo=scheduler.esta_activo(),
     )
 
 

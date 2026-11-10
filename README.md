@@ -92,6 +92,11 @@ Para la vista de la tienda al final del panel puedes usar `STORE_URL` o el campo
 **«Tienda que se muestra al final del panel»** en Configuración. Si lo dejas
 vacío, se usará la primera URL rastreada que no sea un `sitemap.xml`.
 
+> Trendy Shop envía `X-Frame-Options: SAMEORIGIN`, así que no se puede incrustar
+> en un iframe. El panel muestra una captura guardada en
+> `app/static/img/tienda-preview.png` y un botón para abrir la tienda real.
+> Puedes reemplazar esa captura por otra cuando quieras.
+
 > Las credenciales SMTP, las de WhatsApp (Twilio/CallMeBot) y el token de Telegram
 > se leen **solo** de `.env` y nunca se guardan en la base de datos.
 
