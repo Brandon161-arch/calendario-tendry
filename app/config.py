@@ -65,11 +65,15 @@ class Config:
         "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     )
 
-    # Tienda que se muestra incrustada al final del panel
-    STORE_URL = os.getenv("STORE_URL", "")
+    # Tienda que se muestra al final del panel
+    STORE_URL = os.getenv("STORE_URL", "https://www.maquillajetrendyshop.com/")
 
     # Valores iniciales de la configuración editable
-    DEFAULT_URLS = os.getenv("DEFAULT_URLS", "")
+    DEFAULT_URLS = os.getenv(
+        "DEFAULT_URLS",
+        "Tienda Trendy | https://www.maquillajetrendyshop.com/, "
+        "Calendario de Adviento | https://www.maquillajetrendyshop.com/calendario-de-adviento",
+    )
     DEFAULT_KEYWORDS = os.getenv(
         "DEFAULT_KEYWORDS",
         "calendario de adviento, advent calendar, adviento",

@@ -7,8 +7,10 @@ detecta el calendario de adviento.
 Incluye panel de estado, configuración editable desde el navegador, historial de
 revisiones y pruebas automáticas.
 
-> **Importante:** este proyecto no incluye una URL de Tendry inventada. Añade la
-> web oficial en **Configuración** o en `DEFAULT_URLS` dentro de `.env`.
+> **URLs oficiales:** el proyecto ya incluye por defecto la tienda
+> `https://www.maquillajetrendyshop.com/` y la página
+> `https://www.maquillajetrendyshop.com/calendario-de-adviento`.
+> Puedes cambiarlas en **Configuración** o con `DEFAULT_URLS` en `.env`.
 
 ---
 
@@ -80,9 +82,10 @@ Las URLs y las palabras clave puedes añadirlas directamente en la página de
 **Configuración** una vez arrancada la app. También puedes dejarlas en `.env`:
 
 ```env
-DEFAULT_URLS=Inicio | https://www.sitio-oficial.com/, Categoría | https://www.sitio-oficial.com/categoria
+DEFAULT_URLS=Tienda Trendy | https://www.maquillajetrendyshop.com/, Calendario de Adviento | https://www.maquillajetrendyshop.com/calendario-de-adviento
 DEFAULT_KEYWORDS=calendario de adviento, advent calendar, adviento
 CHECK_INTERVAL_MINUTES=15
+STORE_URL=https://www.maquillajetrendyshop.com/
 ```
 
 Los valores de `.env` solo se usan para crear la configuración inicial. Después

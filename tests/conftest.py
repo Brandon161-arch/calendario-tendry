@@ -22,6 +22,7 @@ def app(tmp_path):
         SQLALCHEMY_DATABASE_URI = f"sqlite:///{(tmp_path / 'test.db').as_posix()}"
         SCHEDULER_ENABLED = False
         DEFAULT_URLS = ""
+        STORE_URL = ""
         NTFY_TOPIC = ""
         EMAIL_TO = ""
         SMTP_HOST = ""
