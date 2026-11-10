@@ -167,14 +167,10 @@
       {% endfor %}
     </div>
   {% else %}
-    <div class="empty-state">
-      <span class="empty-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.4L19 10l-5.1 1.6L12 17l-1.9-5.4L5 10l5.1-1.6z"/></svg>
-      </span>
-      <h3 class="empty-title">Añade la primera URL</h3>
-      <p class="empty-text">Pega la web oficial de Tendry, una categoría o su sitemap. Yo me encargo de revisarlo con cuidado.</p>
-      <a class="btn btn-primary" href="{{ url_for('main.configuracion') }}">Configurar URLs</a>
-    </div>
+    <p class="section-sub">
+      No hay URLs activas.
+      <a href="{{ url_for('main.configuracion') }}">Añádelas en Configuración</a>.
+    </p>
   {% endif %}
 </section>
 

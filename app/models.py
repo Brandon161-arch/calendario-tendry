@@ -155,9 +155,13 @@ def inicializar_datos(app) -> None:
     if db.session.get(BotState, 1) is None:
         db.session.add(BotState(id=1, running=True, calendar_found=False, last_result="never"))
 
-    # Carga inicial de las URLs oficiales. Se hace una sola vez para no
-    # reactivar enlaces que el usuario haya desactivado después.
-    if app.config.get("DEFAULT_URLS") and Setting.get("defaults_seeded") != "1":
+    # Carga inicial de las URLs oficiales. Si la base está vacía se siembran
+    # siempre; si ya hay URLs, solo se hace la primera vez para no reactivar
+    # enlaces que el usuario haya desactivado después.
+    sin_urls = TargetURL.query.count() == 0
+    if app.config.get("DEFAULT_URLS") and (
+        sin_urls or Setting.get("defaults_seeded") != "1"
+    ):
         existentes = {
             objetivo.url.rstrip("/"): objetivo for objetivo in TargetURL.query.all()
         }
